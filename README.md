@@ -46,8 +46,10 @@ the parts that need no judgment.
  photo    scenes        2:3 pins   redo if bad    a day       per pin
 ```
 
-- **Your real product in every pin.** The product photo from your page goes to the image model
-  as a reference; the pin places that exact product in a new scene instead of inventing one.
+- **Your images, your call.** By default the product photo from your page goes to the image
+  model as a reference, so the pin places that exact product in a new scene. Prefer cheap
+  text-to-image (`--model flux/schnell`, about $0.01 a pin), your own product photo
+  (`--photo-only`), or your own files (put a file name in a pin's `image` field).
 - **Search first.** Each pin gets its own search phrase, a title led by it and a description
   that answers it. No hashtags, no claims your page doesn't make.
 - **Checked before you see it.** Claude Code looks at each image: a misspelled headline, stray
@@ -79,6 +81,8 @@ pin-engine read URL --count 5         # page facts, product.jpg and an empty pla
 pin-engine check output/<folder>      # limits, empty fields, repeated keywords
 pin-engine render output/<folder>     # images (asks before spending) and preview.html
 pin-engine render output/<folder> --redo 3
+pin-engine render output/<folder> --model flux/schnell   # text-to-image, about $0.01 a pin
+pin-engine render output/<folder> --photo-only           # your product photo, no generation
 pin-engine boards                     # your Pinterest boards through Zernio
 pin-engine publish output/<folder> --create-boards    # shows the schedule, asks, then schedules
 pin-engine stats                      # saves, clicks, impressions per pin
@@ -95,7 +99,13 @@ page that can't be read, pass `--title "..." --photo product.jpg`.
 Each image is quoted by Raywake before it runs and `render` asks before spending. The total is
 printed at the end and in `preview.html`; `pin-engine credits` shows your balance.
 
-<!-- TODO: measured run: N pins = $X -->
+| Images | Cost per pin |
+|---|---|
+| `--photo-only` or your own files | $0 |
+| `--model flux/schnell` (text to image) | about $0.01 (measured 31 Oct 2026) |
+| default: GPT Image 2.5 Sunburst edit of your product photo | quoted before it runs |
+
+Claude Code does the planning and image review in your own session; there is no other AI bill.
 
 [Top up Raywake credits →](https://raywake.si/billing?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=readme-cost)
 

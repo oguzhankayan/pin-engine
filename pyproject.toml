@@ -5,6 +5,11 @@ readme = "README.md"
 license = {text = "MIT"}
 description = "Claude Code turns any product or post link into scheduled Pinterest pins: product-faithful images by Raywake, publishing through Zernio."
 requires-python = ">=3.11"
+keywords = ["pinterest", "pins", "claude-code", "raywake", "zernio", "etsy", "shopify", "marketing"]
+
+[project.urls]
+Homepage = "https://github.com/oguzhankayan/pin-engine"
+Images = "https://raywake.si/?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=pypi"
 dependencies = [
     "requests>=2.31",
     "pydantic>=2.6",

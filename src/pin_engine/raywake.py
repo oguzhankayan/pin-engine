@@ -78,9 +78,11 @@ def reference(image: bytes, max_bytes: int = BODY_BUDGET) -> str:
 
 
 class RaywakeClient:
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self.api_key = api_key or settings.raywake_api_key
         self.base = settings.raywake_base_url.rstrip("/")
+        # A chosen model (e.g. flux/schnell) makes every pin from text; the default edits the product photo.
+        self.model = model
 
     def _headers(self, idempotency_key: str | None = None) -> dict:
         if not self.api_key:
@@ -115,9 +117,13 @@ class RaywakeClient:
         raise RaywakeError(f"{method} {path} failed after {retries} attempts: {last}")
 
     def build_input(self, prompt: str, references: list[str] | None = None, size: str = PIN_SIZE) -> tuple[str, dict]:
-        model = settings.raywake_edit_model if references else settings.raywake_model
-        data = {"prompt": prompt, "image_size": image_size(size), "quality": settings.raywake_quality,
-                "num_images": 1, "output_format": "jpeg"}
+        if self.model:
+            model, references = self.model, None
+        else:
+            model = settings.raywake_edit_model if references else settings.raywake_model
+        data = {"prompt": prompt, "image_size": image_size(size), "num_images": 1}
+        if model.startswith("openai/gpt-image"):
+            data.update(quality=settings.raywake_quality, output_format="jpeg")
         if references:
             data["image_urls"] = references[:4]
         return model, data

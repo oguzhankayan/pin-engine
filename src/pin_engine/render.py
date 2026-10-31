@@ -27,7 +27,7 @@ def estimate(plan: dict, references: list[str] | None, client: RaywakeClient, re
     todo = pending(plan, redo)
     if not todo:
         return 0.0
-    quote = client.quote(prompt_for(todo[0], bool(references)), references)
+    quote = client.quote(prompt_for(todo[0], bool(references) and not client.model), references)
     return float(quote.get("credits") or 0) * len(todo)
 
 
@@ -44,7 +44,8 @@ def render(plan: dict, folder: Path, references: list[str] | None, client: Raywa
     for index, pin in enumerate(plan["pins"], 1):
         if pin not in pending(plan, redo):
             continue
-        image, credits = client.generate(prompt_for(pin, bool(references)), references)
+        with_product = bool(references) and not client.model
+        image, credits = client.generate(prompt_for(pin, with_product), references)
         path = folder / f"pin-{index:02d}.jpg"
         path.write_bytes(image)
         spent += credits

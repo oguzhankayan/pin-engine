@@ -52,12 +52,18 @@ Then `.venv/bin/pin-engine check <folder>` and fix anything it lists.
 .venv/bin/pin-engine render <folder>          # asks before spending
 ```
 
+Ask the user which images they want if they have not said: the default edits the product
+photo (the real product in a new scene), `--model flux/schnell` is text-to-image at about
+$0.01 a pin (the product will only resemble theirs), `--photo-only` uses their product photo
+as is, and their own files go in a pin's `image` field.
+
 Open every `pin-NN.jpg` (Read tool) next to `product.jpg` and check:
 
 1. The overlay is spelled exactly as planned, fully visible and readable on a phone.
 2. No other text, watermark or logo.
-3. The product is the same product: shape, color, label, design. A changed or invented
-   product is never acceptable, it misleads buyers.
+3. With the default model, the product is the same product: shape, color, label, design.
+   A changed product misleads buyers. With text-to-image models, say plainly that the
+   product is a look-alike and let the user decide.
 4. Nothing distorted (hands, edges, duplicated objects).
 
 Fix a failing pin by sharpening its `scene` or shortening its `overlay`, then

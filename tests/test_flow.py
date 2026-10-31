@@ -23,6 +23,10 @@ def jpeg(color="black") -> bytes:
 
 class FakeRaywake:
     prompts: list = []
+    model = None
+
+    def __init__(self, model=None):
+        self.model = model
 
     def quote(self, prompt, references=None):
         return {"quote_id": "q", "credits": 32}
@@ -126,3 +130,18 @@ def test_zernio_pin_payload_marks_ai_and_uses_board_link_and_schedule(monkeypatc
     data = sent["platforms"][0]["platformSpecificData"]
     assert data == {"boardId": "b", "title": "T", "link": "https://x.example", "isAiGenerated": True}
     assert sent["content"] == "D" and sent["scheduledFor"] == "2026-11-02T20:00:00" and "publishNow" not in sent
+
+
+def test_photo_only_puts_the_product_photo_on_every_pin_without_generating(project):
+    result = CliRunner().invoke(cli.cli, ["render", str(project), "--photo-only"])
+    assert result.exit_code == 0, result.output
+    assert [pin["image"] for pin in json.loads((project / "plan.json").read_text())["pins"]] == ["product.jpg"] * 2
+    assert not FakeRaywake.prompts
+
+
+def test_a_chosen_model_makes_pins_from_text_with_only_the_inputs_it_takes():
+    from pin_engine.raywake import RaywakeClient
+    model, data = RaywakeClient(api_key="k", model="flux/schnell").build_input("A street.", ["data:image/jpeg;base64,AA"])
+    assert model == "flux/schnell" and data == {"prompt": "A street.", "image_size": {"width": 1024, "height": 1536}, "num_images": 1}
+    model, data = RaywakeClient(api_key="k").build_input("A street.", ["data:image/jpeg;base64,AA"])
+    assert model.endswith("/edit") and data["image_urls"] and data["output_format"] == "jpeg"

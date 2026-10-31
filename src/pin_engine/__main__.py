@@ -96,16 +96,29 @@ def check(folder: str) -> None:
 @cli.command()
 @click.argument("folder")
 @click.option("--redo", default="", help="Pin numbers to make again, e.g. 2,4.")
+@click.option("--model", default=None, help="Raywake model for every pin, e.g. flux/schnell (about $0.01, text only). "
+              "Default: GPT Image 2.5 Sunburst, editing your product photo.")
+@click.option("--photo-only", is_flag=True, help="Use the product photo itself on every pin; nothing is generated.")
 @click.option("--yes", is_flag=True, help="Skip the cost confirmation.")
-def render(folder: str, redo: str, yes: bool) -> None:
-    """Make the pin images with Raywake (asks before spending) and write preview.html."""
+def render(folder: str, redo: str, model: str | None, photo_only: bool, yes: bool) -> None:
+    """Make the pin images with Raywake (asks before spending) and write preview.html.
+
+    A pin whose "image" field already names a file in the folder keeps it: drop in your own photos."""
     plan, path = plans.load(folder)
     found = plans.review(plan)
     if found:
         raise SystemExit("Fix the plan first: " + " | ".join(f"pin {i}: {'; '.join(v)}" for i, v in found.items()))
     again = {int(part) for part in redo.split(",") if part.strip()}
     _, references = _product(path.parent)
-    client = RaywakeClient()
+    if photo_only:
+        if not references:
+            raise SystemExit("No product.jpg in this folder; pass --photo to read, or add your own images.")
+        for pin in rendering.pending(plan, again):
+            pin["image"] = PRODUCT
+        plans.save(plan, path)
+        console.print(f"Every pin uses {PRODUCT}. Preview: {rendering.preview(plan, path.parent)}")
+        return
+    client = RaywakeClient(model=model)
     credits = rendering.estimate(plan, references, client, again)
     if not credits:
         console.print("Every pin already has an image. Use --redo to make one again.")
