@@ -153,23 +153,25 @@ def publish(folder: str, account: str | None, board: str | None, create_boards: 
         board_ids = {pin["board"]: board for pin in todo}
     else:
         board_ids = publishing.match_boards(sorted({pin["board"] for pin in todo}), client.boards(found["_id"]))
-        missing = [name for name, identity in board_ids.items() if not identity]
-        if missing and not create_boards:
-            raise SystemExit(f"Boards not found: {', '.join(missing)}. Pass --create-boards or --board <id> "
-                             "(see: pin-engine boards).")
-        for name in missing:
-            board_ids[name] = client.create_board(found["_id"], name)["id"]
+    missing = [name for name, identity in board_ids.items() if not identity]
+    if missing and not create_boards:
+        raise SystemExit(f"Boards not found: {', '.join(missing)}. Pass --create-boards or --board <id> "
+                         "(see: pin-engine boards).")
     first = datetime.strptime(start, "%Y-%m-%d %H:%M") if start else publishing.default_start()
     times = publishing.slots(len(todo), first, every)
     table = Table()
     for column in ("When", "Board", "Title"):
         table.add_column(column)
     for pin, when in zip(todo, times):
-        table.add_row("draft" if draft else when.replace("T", " ")[:16], pin["board"], pin["title"])
+        table.add_row("draft" if draft else when.replace("T", " ")[:16],
+                      pin["board"] + (" (new)" if pin["board"] in missing else ""), pin["title"])
     console.print(f"@{found.get('username')} · links to {plan['url']}")
     console.print(table)
     if not yes and not click.confirm("Schedule these pins? Published pins cannot be deleted through Zernio.", default=False):
         raise SystemExit(0)
+    # Boards are created only after the yes: declining leaves the Pinterest account untouched.
+    for name in missing:
+        board_ids[name] = client.create_board(found["_id"], name)["id"]
     count = publishing.publish(plan, path.parent, client, found, board_ids, times, draft=draft, log=console.print)
     plans.save(plan, path)
     console.print(f"{count} of {len(todo)} pins {'saved as drafts' if draft else 'scheduled'}.")
