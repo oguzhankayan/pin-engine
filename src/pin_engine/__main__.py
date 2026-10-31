@@ -1,7 +1,6 @@
-"""pin-engine CLI: plan → render → publish → stats."""
+"""pin-engine CLI: read → (Claude Code writes the plan) → check → render → publish → stats."""
 from __future__ import annotations
 
-import webbrowser
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -32,7 +31,7 @@ def _product(folder: Path) -> tuple[bytes | None, list[str] | None]:
     return photo, [reference(photo)]
 
 
-def _plan(url: str, count: int, language: str, title: str | None, photo: str | None) -> tuple[dict, Path]:
+def _read(url: str, count: int, language: str, title: str | None, photo: str | None) -> tuple[dict, Path]:
     try:
         page = pages.read(url)
     except (SystemExit, Exception) as error:  # noqa: BLE001
@@ -42,9 +41,9 @@ def _plan(url: str, count: int, language: str, title: str | None, photo: str | N
     if title:
         page.title = title
     image = Path(photo).expanduser().read_bytes() if photo else pages.photo(page)
-    page.images = page.images or ([photo] if photo else [])
-    result = plans.make(page, count=count, language=language)
+    result = plans.skeleton(page, count, language)
     result["product_photo"] = bool(image)
+    result["page"]["has_product_photo"] = bool(image)
     path = plans.save(result)
     if image:
         (path.parent / PRODUCT).write_bytes(image)
@@ -63,7 +62,7 @@ def _show(plan: dict) -> None:
 
 @click.group()
 def cli() -> None:
-    """Turn a product or post link into Pinterest pins. Images by Raywake, publishing by Zernio."""
+    """Pinterest pins from a link, driven by Claude Code. Images by Raywake, publishing by Zernio."""
 
 
 @cli.command()
@@ -72,50 +71,51 @@ def cli() -> None:
 @click.option("--language", default="English", show_default=True)
 @click.option("--title", default=None, help="Product or post title, when the page cannot be read.")
 @click.option("--photo", default=None, type=click.Path(exists=True), help="Local product photo to keep in every pin.")
-def plan(url: str, count: int, language: str, title: str | None, photo: str | None) -> None:
-    """Read URL and write a pin plan (no images, no cost beyond a Claude call)."""
-    result, path = _plan(url, count, language, title, photo)
-    _show(result)
-    console.print(f"Plan saved: {path}\nEdit it if you like, then: pin-engine render {path.parent}")
+def read(url: str, count: int, language: str, title: str | None, photo: str | None) -> None:
+    """Read URL, save its product photo and an empty plan.json for Claude Code to fill in."""
+    result, path = _read(url, count, language, title, photo)
+    console.print_json(data={**result["page"], "text": result["page"]["text"][:300] + " ... (full text in plan.json)"})
+    console.print(f"Product photo: {'saved as ' + str(path.parent / PRODUCT) if result['product_photo'] else 'none found'}")
+    console.print(f"Plan to fill in: {path}  ({count} pins; rules in .claude/skills/pin-engine/SKILL.md)")
 
 
 @cli.command()
 @click.argument("folder")
-@click.option("--yes", is_flag=True, help="Skip the cost confirmation.")
-@click.option("--rerolls", default=1, show_default=True, help="New attempts when the image check fails.")
-@click.option("--no-check", is_flag=True, help="Skip the Claude image check.")
-def render(folder: str, yes: bool, rerolls: int, no_check: bool) -> None:
-    """Make the pin images with Raywake and open a local preview."""
-    plan, path = plans.load(folder)
-    for pin in plan["pins"]:
-        pin["problems"] = plans.problems(pin)
-    product, references = _product(path.parent)
-    client = RaywakeClient()
-    credits = rendering.estimate(plan, references, client)
-    if credits and not yes:
-        click.confirm(f"Images will cost about ${credits / CREDITS_PER_USD:.2f} "
-                      f"(plus a retry when a check fails). Continue?", abort=True)
-    rendering.render(plan, path.parent, product, references, client, rerolls=rerolls, qc=not no_check, log=console.print)
-    plans.save(plan, path)
-    preview = rendering.preview(plan, path.parent)
-    spent = sum(pin.get("credits") or 0 for pin in plan["pins"]) / CREDITS_PER_USD
-    console.print(f"Images: ${spent:.2f}. Preview: {preview}")
-    webbrowser.open(preview.as_uri())
+def check(folder: str) -> None:
+    """Validate plan.json: limits, empty fields, dashes and repeated keywords."""
+    plan, _ = plans.load(folder)
+    found = plans.review(plan)
+    _show(plan)
+    for index, issues in found.items():
+        console.print(f"pin {index}: {'; '.join(issues)}")
+    if found:
+        raise SystemExit(1)
+    console.print("Plan is ready to render.")
 
 
 @cli.command()
-@click.argument("url")
-@click.option("--count", default=3, show_default=True)
-@click.option("--language", default="English", show_default=True)
-@click.option("--title", default=None)
-@click.option("--photo", default=None, type=click.Path(exists=True))
-@click.option("--yes", is_flag=True)
-@click.pass_context
-def demo(ctx: click.Context, url: str, count: int, language: str, title: str | None, photo: str | None, yes: bool) -> None:
-    """plan + render for one link, nothing published."""
-    result, path = _plan(url, count, language, title, photo)
-    _show(result)
-    ctx.invoke(render, folder=str(path.parent), yes=yes, rerolls=1, no_check=False)
+@click.argument("folder")
+@click.option("--redo", default="", help="Pin numbers to make again, e.g. 2,4.")
+@click.option("--yes", is_flag=True, help="Skip the cost confirmation.")
+def render(folder: str, redo: str, yes: bool) -> None:
+    """Make the pin images with Raywake (asks before spending) and write preview.html."""
+    plan, path = plans.load(folder)
+    found = plans.review(plan)
+    if found:
+        raise SystemExit("Fix the plan first: " + " | ".join(f"pin {i}: {'; '.join(v)}" for i, v in found.items()))
+    again = {int(part) for part in redo.split(",") if part.strip()}
+    _, references = _product(path.parent)
+    client = RaywakeClient()
+    credits = rendering.estimate(plan, references, client, again)
+    if not credits:
+        console.print("Every pin already has an image. Use --redo to make one again.")
+    elif not yes:
+        click.confirm(f"{len(rendering.pending(plan, again))} images, about ${credits / CREDITS_PER_USD:.2f}. Continue?", abort=True)
+    spent = rendering.render(plan, path.parent, references, client, again, log=console.print)
+    plans.save(plan, path)
+    preview = rendering.preview(plan, path.parent)
+    total = sum(pin.get("credits") or 0 for pin in plan["pins"]) / CREDITS_PER_USD
+    console.print(f"This run ${spent / CREDITS_PER_USD:.2f}, all images ${total:.2f}. Preview: {preview}")
 
 
 @cli.command()
@@ -195,10 +195,9 @@ def credits() -> None:
     """Raywake balance and what pin-engine has spent."""
     wallet = RaywakeClient().wallet()
     spent = total_spend()
-    from .llm import total_spend as claude_spend
     balance = wallet.get("available_credits", wallet.get("credits", 0))
     console.print(f"Raywake balance: ${float(balance) / CREDITS_PER_USD:.2f}  ·  images made: {spent['images']} "
-                  f"(${spent['usd']:.2f})  ·  Claude: ${claude_spend():.2f}")
+                  f"(${spent['usd']:.2f})")
     console.print(f"Top up: {link('billing', 'credits')}")
 
 

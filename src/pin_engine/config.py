@@ -20,9 +20,6 @@ PIN_SIZE = "1024x1536"  # 2:3, Pinterest's recommended shape
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", env_file_encoding="utf-8", extra="ignore")
 
-    anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-5-5"
-
     raywake_api_key: str = ""
     raywake_base_url: str = "https://api.raywake.com"
     raywake_model: str = "openai/gpt-image-2.5/sunburst/text-to-image"

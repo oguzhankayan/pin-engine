@@ -3,10 +3,9 @@ name = "pin-engine"
 version = "0.1.0"
 readme = "README.md"
 license = {text = "MIT"}
-description = "Turn any product or post link into scheduled Pinterest pins: keyword-led copy, product-faithful images by Raywake, publishing through Zernio."
+description = "Claude Code turns any product or post link into scheduled Pinterest pins: product-faithful images by Raywake, publishing through Zernio."
 requires-python = ">=3.11"
 dependencies = [
-    "anthropic>=0.40",
     "requests>=2.31",
     "pydantic>=2.6",
     "pydantic-settings>=2.2",

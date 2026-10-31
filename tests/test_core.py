@@ -21,11 +21,27 @@ def test_page_reads_meta_product_and_visible_text():
     assert "Print at home." in result.text and "not text" not in result.text and "Menu" not in result.text
 
 
+GOOD = {"keyword": "teacher gift ideas", "title": "Teacher gift ideas", "description": "Twelve cards.",
+        "overlay": "12 cards", "scene": "A desk.", "board": "Teacher Gifts", "angle": "gift"}
+
+
 def test_plan_problems_catch_limits_dashes_and_empty_fields():
-    good = {"title": "Teacher gift ideas", "description": "Twelve cards.", "overlay": "12 cards", "scene": "A desk."}
-    assert plan.problems(good) == []
-    bad = {**good, "title": "x" * 101, "overlay": "y" * 61, "description": "a — b", "scene": ""}
+    assert plan.problems(GOOD) == []
+    bad = {**GOOD, "title": "x" * 101, "overlay": "y" * 61, "description": "a — b", "scene": ""}
     assert len(plan.problems(bad)) == 4
+
+
+def test_review_flags_repeated_keywords_and_empty_skeleton_pins():
+    skeleton = plan.skeleton(page.Page(url="https://a.example/x", title="X"), 2, "English")
+    assert set(plan.review(skeleton)) == {1, 2}
+    filled = {**skeleton, "pins": [GOOD, {**GOOD, "keyword": "Teacher Gift Ideas "}]}
+    assert plan.review(filled) == {2: ["same keyword as pin 1"]}
+
+
+def test_pending_skips_made_and_published_pins_unless_redone():
+    pins = {"pins": [{**GOOD, "image": "pin-01.jpg"}, dict(GOOD), {**GOOD, "image": "pin-03.jpg", "post_id": "p"}]}
+    assert render.pending(pins) == [pins["pins"][1]]
+    assert render.pending(pins, {1, 3}) == pins["pins"][:2]
 
 
 def test_prompt_keeps_the_reference_product_and_controls_text():
