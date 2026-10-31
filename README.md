@@ -99,12 +99,6 @@ page that can't be read, pass `--title "..." --photo product.jpg`.
 Each image is quoted by Raywake before it runs and `render` asks before spending. The total is
 printed at the end and in `preview.html`; `pin-engine credits` shows your balance.
 
-| Images | Cost per pin |
-|---|---|
-| `--photo-only` or your own files | $0 |
-| `--model flux/schnell` (text to image) | about $0.01 (measured 31 Oct 2026) |
-| default: GPT Image 2.5 Sunburst edit of your product photo | quoted before it runs |
-
 Claude Code does the planning and image review in your own session; there is no other AI bill.
 
 [Top up Raywake credits →](https://raywake.si/billing?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=readme-cost)
