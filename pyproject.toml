@@ -7,9 +7,6 @@ description = "Claude Code turns any product or post link into scheduled Pintere
 requires-python = ">=3.11"
 keywords = ["pinterest", "pins", "claude-code", "raywake", "zernio", "etsy", "shopify", "marketing"]
 
-[project.urls]
-Homepage = "https://github.com/oguzhankayan/pin-engine"
-Images = "https://raywake.si/?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=pypi"
 dependencies = [
     "requests>=2.31",
     "pydantic>=2.6",
@@ -19,6 +16,10 @@ dependencies = [
     "rich>=13.7",
     "pillow>=10.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/oguzhankayan/pin-engine"
+Images = "https://raywake.si/?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=pypi"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.15"]
