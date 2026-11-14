@@ -48,8 +48,9 @@ the parts that need no judgment.
 
 - **Your images, your call.** By default the product photo from your page goes to the image
   model as a reference, so the pin places that exact product in a new scene. Prefer cheap
-  text-to-image (`--model flux/schnell`, about $0.01 a pin), your own product photo
-  (`--photo-only`), or your own files (put a file name in a pin's `image` field).
+  text-to-image (`--model flux/schnell`, about $0.02 for a 1024×1536 pin at $0.01 per
+  megapixel, November 2026), your own product photo (`--photo-only`), or your own files (put a
+  file name in a pin's `image` field).
 - **Search first.** Each pin gets its own search phrase, a title led by it and a description
   that answers it. No hashtags, no claims your page doesn't make.
 - **Checked before you see it.** Claude Code looks at each image: a misspelled headline, stray
@@ -81,7 +82,7 @@ pin-engine read URL --count 5         # page facts, product.jpg and an empty pla
 pin-engine check output/<folder>      # limits, empty fields, repeated keywords
 pin-engine render output/<folder>     # images (asks before spending) and preview.html
 pin-engine render output/<folder> --redo 3
-pin-engine render output/<folder> --model flux/schnell   # text-to-image, about $0.01 a pin
+pin-engine render output/<folder> --model flux/schnell   # text-to-image, about $0.02 a pin
 pin-engine render output/<folder> --photo-only           # your product photo, no generation
 pin-engine boards                     # your Pinterest boards through Zernio
 pin-engine publish output/<folder> --create-boards    # shows the schedule, asks, then schedules
@@ -101,7 +102,7 @@ printed at the end and in `preview.html`; `pin-engine credits` shows your balanc
 
 Claude Code does the planning and image review in your own session; there is no other AI bill.
 
-[Top up Raywake credits →](https://raywake.si/billing?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=readme-cost)
+[Top up your Raywake balance →](https://raywake.si/billing?utm_source=github&utm_medium=pin-engine&utm_campaign=oss&utm_content=readme-cost)
 
 ## Good to know
 

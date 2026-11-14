@@ -96,7 +96,7 @@ def check(folder: str) -> None:
 @cli.command()
 @click.argument("folder")
 @click.option("--redo", default="", help="Pin numbers to make again, e.g. 2,4.")
-@click.option("--model", default=None, help="Raywake model for every pin, e.g. flux/schnell (about $0.01, text only). "
+@click.option("--model", default=None, help="Raywake model for every pin, e.g. flux/schnell (about $0.02, text only). "
               "Default: GPT Image 2.5 Sunburst, editing your product photo.")
 @click.option("--photo-only", is_flag=True, help="Use the product photo itself on every pin; nothing is generated.")
 @click.option("--yes", is_flag=True, help="Skip the cost confirmation.")
