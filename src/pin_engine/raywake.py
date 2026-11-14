@@ -1,6 +1,6 @@
 """Raywake image client: every pin image is made here.
 
-  1. POST /v1/quotes   {"model", "input"}                       -> {"quote_id", "credits"}
+  1. POST /v1/quotes   {"model", "input"}                       -> {"quote_id", "price_usd", "credits"}
   2. POST /v1/generate {"model", "quote_id", "input"} + Idempotency-Key (?wait=true)
   3. GET  /v1/jobs/{job_id}                                      -> {"status", "outputs"}
 
@@ -33,7 +33,7 @@ def link(path: str = "", content: str = "cli") -> str:
 
 ERRORS = {
     400: "Bad request (input not accepted by this model)", 401: "Unauthorized (bad or revoked API key)",
-    402: f"Out of Raywake credits. Top up: {link('billing', 'out-of-credits')}",
+    402: f"Raywake balance too low. Top up: {link('billing', 'out-of-credits')}",
     403: "Forbidden (the key needs the generate and jobs:read scopes)",
     409: "Conflict (quote expired or input changed)", 413: "Request too large", 429: "Rate limited",
 }

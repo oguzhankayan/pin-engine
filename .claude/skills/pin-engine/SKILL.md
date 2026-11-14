@@ -54,7 +54,7 @@ Then `.venv/bin/pin-engine check <folder>` and fix anything it lists.
 
 Ask the user which images they want if they have not said: the default edits the product
 photo (the real product in a new scene), `--model flux/schnell` is text-to-image at about
-$0.01 a pin (the product will only resemble theirs), `--photo-only` uses their product photo
+$0.02 a pin (the product will only resemble theirs), `--photo-only` uses their product photo
 as is, and their own files go in a pin's `image` field.
 
 Open every `pin-NN.jpg` (Read tool) next to `product.jpg` and check:
